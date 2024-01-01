@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const { queryDatabase } = require("../config/dbConfig");
+const { queryDatabase, initializeDB } = require("../config/dbConfig");
 const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -49,7 +49,6 @@ async function getUsers() {
     throw new Error(error);
   }
 }
-getUsers();
 
 async function getCachedEvents() {
   try {
@@ -64,7 +63,6 @@ async function getCachedEvents() {
     throw new Error(error);
   }
 }
-getCachedEvents();
 
 async function getCachedReviews() {
   try {
@@ -79,7 +77,6 @@ async function getCachedReviews() {
     throw new Error(error);
   }
 }
-getCachedReviews();
 
 async function getCachedEventParticipants() {
   try {
@@ -94,7 +91,6 @@ async function getCachedEventParticipants() {
     throw new Error(error);
   }
 }
-getCachedEventParticipants();
 
 async function getCachedNotifications() {
   try {
@@ -109,7 +105,17 @@ async function getCachedNotifications() {
     throw new Error(error);
   }
 }
-getCachedNotifications();
+
+initializeDB()
+  .then((message) => {
+    getUsers();
+    getCachedEvents();
+    getCachedEventParticipants();
+    getCachedNotifications();
+  })
+  .catch((error) => {
+    console.error("Failed to initialize database", error);
+  });
 
 async function getUserNotifications(user_id, type = undefined) {
   try {
@@ -359,17 +365,17 @@ const getUser = asyncHandler(async (req, res) => {
     let reviews = await getCachedReviews();
     reviews = reviews.filter((r) => {
       return r.user_id == user.id;
-    })
-    
+    });
+
     user.reviews = reviews;
     user.requests = requests;
     user.notifications = notifications;
-    if(user.privilege == "organizer" || user.privilege == "admin"){
+    if (user.privilege == "organizer" || user.privilege == "admin") {
       let events = await getCachedEvents();
       events = events.filter((e) => {
-        return e.organizer_id == user.id
-      })
-      user.hostedEvents = events
+        return e.organizer_id == user.id;
+      });
+      user.hostedEvents = events;
     }
 
     res.status(200).send(user);

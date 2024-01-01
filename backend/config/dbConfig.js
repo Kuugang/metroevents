@@ -220,25 +220,37 @@ async function createNotificationsTable() {
   }
 }
 
-pool.connect(async (err) => {
-  if (err) {
-    console.error("Error connecting to database", err);
-  } else {
-    await createUsersTable();
-    await createEventTypesTable();
-    await createEventsTable();
-    await createBlackListTable();
-    await createRequestsTable();
-    await createEventParticipantsTable();
-    await createVotesTable();
-    await createReviewsTable();
-    await createNotificationTypesTable();
-    await createNotificationsTable();
-    console.log("Connected to database");
-  }
-});
+async function initializeDB() {
+  return new Promise((resolve, reject) => {
+    pool.connect(async (err) => {
+      if (err) {
+        console.error("Error connecting to database", err);
+        reject(err);
+      } else {
+        try {
+          await createUsersTable();
+          await createEventTypesTable();
+          await createEventsTable();
+          await createBlackListTable();
+          await createRequestsTable();
+          await createEventParticipantsTable();
+          await createVotesTable();
+          await createReviewsTable();
+          await createNotificationTypesTable();
+          await createNotificationsTable();
+          console.log("Connected to database");
+          resolve("Database initialized successfully");
+        } catch (error) {
+          console.error("Error creating tables", error);
+          reject(error);
+        }
+      }
+    });
+  });
+}
 
 module.exports = {
   pool,
+  initializeDB,
   queryDatabase,
 };
