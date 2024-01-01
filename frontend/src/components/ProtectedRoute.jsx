@@ -8,7 +8,7 @@ function ProtectedRoute({ children }) {
 
   useEffect(() => {
     try {
-      if (jwtDecode(getCookie("jwt")).privilege === null) {
+      if (jwtDecode(getCookie("auth")).privilege === null) {
         navigate("/");
       }
     } catch (error) {
