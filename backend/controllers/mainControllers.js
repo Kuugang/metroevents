@@ -185,13 +185,13 @@ const verifyEventOrganizer = async (req, res, next) => {
 };
 
 const verifyToken = async (req, res, next) => {
-  const { auth } = req.cookies;
+  const { jwt: token} = req.cookies;
   let query = "SELECT * FROM blacklist WHERE token = $1";
-  const result = await queryDatabase(query, [auth]);
+  const result = await queryDatabase(query, [token]);
   if (result.length > 0) {
     return res.status(401).send("Invalid token");
   }
-  jwt.verify(auth, process.env.JWT_SECRET, {}, (err, decodedToken) => {
+  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
     if (err) {
       return res.status(401).json({ message: "Invalid token" });
     }
@@ -226,15 +226,15 @@ const verifyOrganizerToken = async (req, res, next) => {
 };
 
 const verifyAdminToken = async (req, res, next) => {
-  const { auth } = req.cookies;
+  const { jwt: token } = req.cookies;
   let query = "SELECT * FROM blacklist WHERE token = $1";
 
-  const result = await queryDatabase(query, [auth]);
+  const result = await queryDatabase(query, [token]);
   if (result.length > 0) {
     return res.status(401).send("Invalid token");
   }
 
-  jwt.verify(auth, process.env.JWT_SECRET, {}, (err, decodedToken) => {
+  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
     if (err) {
       return res.status(401).json({ message: "Invalid token" });
     }
@@ -386,11 +386,11 @@ const getUser = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
-  let { auth } = req.cookies;
+  let { token } = req.cookies;
 
   const query = "INSERT INTO blacklist (token) VALUES ($1)";
 
-  const result = await queryDatabase(query, [auth]);
+  const result = await queryDatabase(query, [token]);
   return res.status(200).send("Loggged out successfully");
 });
 
