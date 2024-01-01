@@ -80,7 +80,6 @@ router.route("/organizer/event").put(verifyOrganizerToken, updateEvent);
 
 
 
-
 router.route("/admin/organizers").get(verifyAdminToken, getOrganizers);
 router.route("/admin/users").get(verifyAdminToken, adminGetUsers)
 router.route("/admin/users").post(verifyAdminToken, adminSetUserPrivilege)

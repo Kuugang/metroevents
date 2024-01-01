@@ -201,15 +201,15 @@ const verifyToken = async (req, res, next) => {
 };
 
 const verifyOrganizerToken = async (req, res, next) => {
-  const { auth } = req.cookies;
+  const { jwt: token } = req.cookies;
   let query = "SELECT * FROM blacklist WHERE token = $1";
 
-  const result = await queryDatabase(query, [auth]);
+  const result = await queryDatabase(query, [token]);
   if (result.length > 0) {
     return res.status(401).send("Invalid token");
   }
 
-  jwt.verify(auth, process.env.JWT_SECRET, {}, (err, decodedToken) => {
+  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
     if (err) {
       return res.status(401).json({ message: "Invalid token" });
     }
