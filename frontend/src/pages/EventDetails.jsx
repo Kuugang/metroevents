@@ -224,9 +224,11 @@ export default function EventDetails() {
                   </div>
                 </div>
 
+                <Link to = {`/${event.host.username}`}>
                 <p className="font-semibold">
                   Hosted by {event.host.firstname} {event.host.lastname}
                 </p>
+                </Link>
 
                 {event.is_cancelled && (
                   <p className="font-semibold text-red-500">Event cancelled</p>

@@ -14,12 +14,8 @@ export default function Navbar() {
   const [loginModalIsOpen, setLoginModalIsOpen] = useState(false);
   const [notificationsIsOpen, setNoticationsIsOpen] = useState(false);
 
-  const {
-    userData,
-    setUserData,
-    isLoggedIn,
-    setIsLoggedIn,
-  } = useContext(MyContext);
+  const { userData, setUserData, isLoggedIn, setIsLoggedIn } =
+    useContext(MyContext);
 
   const navigate = useNavigate();
 
@@ -49,7 +45,7 @@ export default function Navbar() {
     logout()
       .then(() => {
         setIsLoggedIn(false);
-        setUserData("")
+        setUserData("");
         navigate("/");
       })
       .catch((error) => {
@@ -66,11 +62,11 @@ export default function Navbar() {
       return new Error(data.message);
     }
 
-    let userNotifications = userData.notifications.slice(); 
+    let userNotifications = userData.notifications.slice();
 
     userNotifications = userNotifications.map((n) => {
       if (n.id === notification.id) {
-        return { ...n, read: true }; 
+        return { ...n, read: true };
       }
       return n;
     });
@@ -123,15 +119,15 @@ export default function Navbar() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    try{
-      if(jwtDecode(getCookie("jwt"))){
-        setUserData(JSON.parse(localStorage.getItem("userDetails")))
-        setIsLoggedIn(true)
+    try {
+      if (jwtDecode(getCookie("jwt"))) {
+        setUserData(JSON.parse(localStorage.getItem("userDetails")));
+        setIsLoggedIn(true);
       }
-    }catch(error){
-      navigate("/")
+    } catch (error) {
+      navigate("/");
     }
-  }, [])
+  }, []);
 
   return (
     <>
@@ -147,16 +143,20 @@ export default function Navbar() {
         </Link>
 
         <div className="flex flex-row gap-2 text-base items-center">
-          {(userData.privilege === "organizer" ||
-            userData.privilege == "admin") && (
+          {isLoggedIn && (
             <>
-              <Link to="/createEvent">
-                <button>Create Event</button>
-              </Link>
-              {userData.privilege === "admin" && (
-                <Link to="/dashboard/admin">
-                  <button>Admin Dashboard</button>
-                </Link>
+              {(userData.privilege === "organizer" ||
+                userData.privilege == "admin") && (
+                <>
+                  <Link to="/createEvent">
+                    <button>Create Event</button>
+                  </Link>
+                  {userData.privilege === "admin" && (
+                    <Link to="/dashboard/admin">
+                      <button>Admin Dashboard</button>
+                    </Link>
+                  )}
+                </>
               )}
             </>
           )}
@@ -179,7 +179,11 @@ export default function Navbar() {
                   <FontAwesomeIcon icon={faBell} />
                   {userData.notifications && (
                     <p className="font-semibold absolute -top-[3px] right-[2px]">
-                    {userData.notifications.filter((notification) => !notification.read).length}
+                      {
+                        userData.notifications.filter(
+                          (notification) => !notification.read
+                        ).length
+                      }
                     </p>
                   )}
                 </button>
@@ -218,7 +222,7 @@ export default function Navbar() {
             <button onClick={openRegisterModal}>Register</button>
             <Login
               isOpen={loginModalIsOpen}
-              setLoginModalIsOpen = {setLoginModalIsOpen}
+              setLoginModalIsOpen={setLoginModalIsOpen}
               onClose={closeLoginModal}
               openRegisterModal={openRegisterModal}
             ></Login>

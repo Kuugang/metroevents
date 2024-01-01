@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 export default function Users({ users, handleUpdateUserPrivilege }) {
   return (
     <div className="">
@@ -24,7 +25,7 @@ export default function Users({ users, handleUpdateUserPrivilege }) {
                   <div className="flex flex-col items-start justify-end">
                     <div className="flex flex-row gap-2">
                       <h1 className="text-sm font-thin">Username: </h1>
-                      <h1 className="text-sm font-normal">{u.username}</h1>
+                      <Link to = "/{u.username}" className="text-sm font-normal">{u.username}</Link>
                     </div>
                   </div>
                 </div>

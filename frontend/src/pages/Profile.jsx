@@ -94,7 +94,9 @@ export default function Profile() {
         <div className="w-[60%]">
           {tab == "Interacted Events" && (
             <>
-              {userEvents && userEvents.length > 0 ? (
+              {(userEvents && (userEvents.filter((e) => {
+                    return e.organizer_id != currentUser.id
+                  })).length > 0 )? (
                 <div className="flex flex-col gap-2">
                   {userEvents.filter((e) => {
                     return e.organizer_id != currentUser.id

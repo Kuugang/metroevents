@@ -163,7 +163,7 @@ export function logout() {
       .then((response) => {
         if (response.status == 200) {
           document.cookie =
-            "auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+            "jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
           localStorage.removeItem("userDetails");
           localStorage.removeItem("token");
           resolve(true);

@@ -11,7 +11,7 @@ export default function CreateEvent() {
 
   const navigate = useNavigate();
 
-  const [creatingPost, setIsCreatingPost] = useState(false);
+  const [creatingPost] = useState(false);
 
   async function handleCreateEvent(e) {
     const file = e.target.imgfile.files[0];

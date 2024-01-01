@@ -10,6 +10,7 @@ import EventDetails from "./pages/EventDetails";
 import ManageEvent from "./pages/ManageEvent";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound"
 
 function App() {
   const { setEvents } = useContext(MyContext);
@@ -23,6 +24,7 @@ function App() {
         <Navbar />
         <div className="mt-20">
           <Routes>
+            <Route path="/" element={<Dashboard></Dashboard>} />
             <Route path="/dashboard" element={<Dashboard></Dashboard>} />
             <Route
               exact
@@ -62,7 +64,7 @@ function App() {
             />
 
             <Route exact path="/:username" element={<Profile></Profile>} />
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={<NotFound/>} />
           </Routes>
         </div>
       </Router>
