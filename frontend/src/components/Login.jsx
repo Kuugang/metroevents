@@ -33,12 +33,12 @@ export default function Login({
       setLoginModalIsOpen(false);
       setIsLoggedIn(true);
 
-
-      console.log(data.data.user.token)
-
-      document.cookie = `auth=${
-        data.data.user.token
-      };Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`;
+      const token = data.data.user.token;
+      const auth = `auth=${token};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`
+      console.log(token);
+      console.log(auth)
+      
+      document.cookie = auth;
 
       localStorage.setItem("userDetails", JSON.stringify(data.data.user));
       localStorage.setItem("token", JSON.stringify(data.data.user.token));
