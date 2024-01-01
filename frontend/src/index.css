@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  body{
+    @apply bg-[rgb(27,27,27)] text-white overflow-x-hidden
+  } 
+
+  button{
+    @apply cursor-pointer border border-black px-2 py-1 rounded;
+  }
+
+  input{
+    @apply text-black
+  }
+
+  button{
+    @apply bg-[rgb(255,163,26)] text-black hover:bg-[rgb(255,183,46)]
+  }
+}
