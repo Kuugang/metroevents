@@ -11,7 +11,7 @@ export default function Dashboard() {
   useEffect(() => {
     try {
       if (
-        jwtDecode(getCookie("auth")).privilege != null &&
+        jwtDecode(getCookie("jwt")).privilege != null &&
         isLoggedIn == false
       ) {
         setIsLoggedIn(true)

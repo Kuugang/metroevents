@@ -124,7 +124,7 @@ export default function Navbar() {
 
   useEffect(() => {
     try{
-      if(jwtDecode(getCookie("auth"))){
+      if(jwtDecode(getCookie("jwt"))){
         setUserData(JSON.parse(localStorage.getItem("userDetails")))
         setIsLoggedIn(true)
       }
