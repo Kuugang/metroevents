@@ -5,17 +5,13 @@ const app = express()
 const cookieParser = require('cookie-parser');
 const port = 6969
 const bodyParser = require("body-parser")
-
-const pool = require("./config/dbConfig")
 const helmet = require("helmet")
-
 
 app.use(cors({
   origin: process.env.node_env == "production" ? "https://metroevents.vercel.app" : "http://localhost:3000",
   credentials: true,
   exposedHeaders: ['Authorization'],
 }));
-
 
 app.use(cookieParser());
 app.use(helmet())
