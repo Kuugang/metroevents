@@ -32,10 +32,7 @@ export default function Login({
 
       setLoginModalIsOpen(false);
       setIsLoggedIn(true);
-      const currentDate = new Date();
-      const expirationDate = new Date(
-        currentDate.getTime() + 24 * 60 * 60 * 1000
-      );
+
 
       console.log(data.data.user.token)
 

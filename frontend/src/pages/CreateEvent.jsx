@@ -1,12 +1,14 @@
 import { axiosFetch } from "../utils/axios";
 import { useNavigate } from "react-router";
-import { uploadImage } from "../utils/helper";
+import { uploadImage, useFetchEventTypes } from "../utils/helper";
 import { MyContext } from "../utils/Context";
 import { useContext, useState } from "react";
 import EventForm from "../components/EventForm";
 
 export default function CreateEvent() {
   const { eventTypes, setEvents } = useContext(MyContext)
+  useFetchEventTypes();
+
   const navigate = useNavigate();
 
   const [creatingPost, setIsCreatingPost] = useState(false);
