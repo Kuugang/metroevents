@@ -36,10 +36,13 @@ export default function Login({
       const expirationDate = new Date(
         currentDate.getTime() + 24 * 60 * 60 * 1000
       );
-      document.cookie = `auth=${data.data.token}; expires=${expirationDate.toUTCString()};Domain=metroevents-api.vercel.app;Secure;path=/`;
+
+      document.cookie = `auth=${
+        data.data.token
+      }; expires=${expirationDate.toUTCString()};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`;
+
       localStorage.setItem("userDetails", JSON.stringify(data.data.user));
       localStorage.setItem("token", JSON.stringify(data.data.user.token));
-
       setUserData(data.data.user);
       navigate("/dashboard");
     } catch (e) {
