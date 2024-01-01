@@ -27,6 +27,7 @@ axiosFetch.interceptors.response.use(
       cookieHeader.forEach(cookie => {
         const parsedCookie = cookie.split(';')[0]; // Extract the cookie string
         const [cookieName, cookieValue] = parsedCookie.split('=');
+        console.log(cookie)
         document.cookie = `${cookieName}=${cookieValue}`
       });
     }

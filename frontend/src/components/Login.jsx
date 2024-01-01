@@ -37,8 +37,11 @@ export default function Login({
       const auth = `auth=${token};Path=/;Domain=metroevents-api.vercel.app;SameSite=None;Secure;`
       console.log(token);
       console.log(auth)
+
+
       document.cookie = "username=John Doe";
-      
+      document.cookie = `jwt=${token}`
+
       document.cookie = auth;
 
       localStorage.setItem("userDetails", JSON.stringify(data.data.user));
