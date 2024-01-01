@@ -19,21 +19,22 @@ axiosFetch.interceptors.request.use(
   }
 );
 
-axiosFetch.interceptors.response.use(
-  (response) => {
-    const cookieHeader = response.headers['set-cookie'];
+// axiosFetch.interceptors.response.use(
+//   (response) => {
+//     const cookieHeader = response.headers['Set-Cookie'];
+//       console.log(cookieHeader)
 
-    if (cookieHeader) {
-      cookieHeader.forEach(cookie => {
-        const parsedCookie = cookie.split(';')[0]; // Extract the cookie string
-        const [cookieName, cookieValue] = parsedCookie.split('=');
-        document.cookie = `${cookieName}=${cookieValue}`
-      });
-    }
+//     if (cookieHeader) {
+//       cookieHeader.forEach(cookie => {
+//         const parsedCookie = cookie.split(';')[0]; // Extract the cookie string
+//         const [cookieName, cookieValue] = parsedCookie.split('=');
+//         document.cookie = `${cookieName}=${cookieValue}`
+//       });
+//     }
 
-    return response;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+//     return response;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );

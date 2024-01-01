@@ -185,66 +185,79 @@ const verifyEventOrganizer = async (req, res, next) => {
 };
 
 const verifyToken = async (req, res, next) => {
-  const { jwt: token} = req.cookies;
-  let query = "SELECT * FROM blacklist WHERE token = $1";
-  const result = await queryDatabase(query, [token]);
-  if (result.length > 0) {
-    return res.status(401).send("Invalid token");
+  const { authorization } = req.headers;
+  if (!authorization) {
+    return res.status(401).send("Unauthorized");
   }
-  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
-    if (err) {
-      return res.status(401).json({ message: "Invalid token" });
+  const token = authorization.split(" ")[1];
+  try {
+    const results = await queryDatabase(
+      "SELECT * FROM blacklist WHERE token = $1",
+      [token]
+    );
+    if (results.length > 0) {
+      return res.status(401).send("Token is blacklisted");
     }
-    req.tokenData = decodedToken;
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.tokenData = payload;
     next();
-  });
+  } catch (eror) {
+    return res.status(401).send("Unauthorized");
+  }
 };
 
 const verifyOrganizerToken = async (req, res, next) => {
-  const { jwt: token } = req.cookies;
-  let query = "SELECT * FROM blacklist WHERE token = $1";
-
-  const result = await queryDatabase(query, [token]);
-  if (result.length > 0) {
-    return res.status(401).send("Invalid token");
+  const { authorization } = req.headers;
+  if (!authorization) {
+    return res.status(401).send("Unauthorized");
   }
+  const token = authorization.split(" ")[1];
+  try {
+    const results = await queryDatabase(
+      "SELECT * FROM blacklist WHERE token = $1",
+      [token]
+    );
+    if (results.length > 0) {
+      return res.status(401).send("Token is blacklisted");
+    }
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
-    if (err) {
-      return res.status(401).json({ message: "Invalid token" });
+    if (payload.privilege == "user") {
+      return res.status(401).send("Unauthorized");
     }
-    if (
-      decodedToken.privilege == "organizer" ||
-      decodedToken.privilege == "admin"
-    ) {
-      req.tokenData = decodedToken;
-      next();
-    } else {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-  });
+    req.tokenData = payload;
+    next();
+  } catch (eror) {
+    return res.status(401).send("Unauthorized");
+  }
 };
 
 const verifyAdminToken = async (req, res, next) => {
-  const { jwt: token } = req.cookies;
-  let query = "SELECT * FROM blacklist WHERE token = $1";
-
-  const result = await queryDatabase(query, [token]);
-  if (result.length > 0) {
-    return res.status(401).send("Invalid token");
+  const { authorization } = req.headers;
+  
+  if (!authorization) {
+    return res.status(401).send("Unauthorized");
   }
+  const token = authorization.split(" ")[1];
+  try {
+    const results = await queryDatabase(
+      "SELECT * FROM blacklist WHERE token = $1",
+      [token]
+    );
+    if (results.length > 0) {
+      return res.status(401).send("Token is blacklisted");
+    }
 
-  jwt.verify(token, process.env.JWT_SECRET, {}, (err, decodedToken) => {
-    if (err) {
-      return res.status(401).json({ message: "Invalid token" });
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (payload.privilege != "admin") {
+      return res.status(401).send("Unauthorized");
     }
-    if (decodedToken.privilege == "admin") {
-      req.tokenData = decodedToken;
-      next();
-    } else {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-  });
+    req.tokenData = payload;
+    next();
+  } catch (eror) {
+    return res.status(401).send("Unauthorized");
+  }
 };
 
 const register = asyncHandler(async (req, res) => {
@@ -276,7 +289,7 @@ const register = asyncHandler(async (req, res) => {
       [firstName, lastName, username, password, "user"]
     )
   ).rows[0];
-  cachedUsers.push(newUser);
+  cachedUsers.unshift(newUser);
   return res.status(200).send("User successfully created");
 });
 
@@ -328,7 +341,10 @@ const login = asyncHandler(async (req, res) => {
       { expiresIn: 86400 }
     );
 
-    // res.set("Set-Cookie", `jwt=${token};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`);
+    res.set(
+      "Set-Cookie",
+      `boang=${token};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`
+    );
     res.status(200).json({
       user: {
         id,
