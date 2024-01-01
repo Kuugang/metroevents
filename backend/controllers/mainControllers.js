@@ -328,7 +328,7 @@ const login = asyncHandler(async (req, res) => {
       { expiresIn: 86400 }
     );
 
-    res.set("Set-Cookie", `auth=${token};Path=/; Domain=vercel.app;SameSite=None;`);
+    res.set("Set-Cookie", `auth=${token};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;`);
     res.status(200).json({
       user: {
         id,
