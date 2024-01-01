@@ -196,7 +196,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     try {
-      if (jwtDecode(getCookie("auth")).privilege !== "admin") {
+      if (jwtDecode(getCookie("jwt")).privilege !== "admin") {
         logout();
         navigate("/");
       }
