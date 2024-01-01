@@ -34,9 +34,10 @@ export default function Login({
       setIsLoggedIn(true);
 
       const token = data.data.user.token;
-      const auth = `auth=${token};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`
+      const auth = `auth=${token};Path=/;Domain=metroevents-api.vercel.app;SameSite=None;Secure;`
       console.log(token);
       console.log(auth)
+      document.cookie = "username=John Doe";
       
       document.cookie = auth;
 

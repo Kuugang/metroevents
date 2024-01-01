@@ -21,7 +21,7 @@ axiosFetch.interceptors.request.use(
 
 axiosFetch.interceptors.response.use(
   (response) => {
-    const cookieHeader = response.headers['set-cookie'];
+    const cookieHeader = response.headers['Set-Cookie'];
 
     if (cookieHeader) {
       cookieHeader.forEach(cookie => {
