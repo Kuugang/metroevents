@@ -9,8 +9,9 @@ const bodyParser = require("body-parser")
 const pool = require("./config/dbConfig")
 const helmet = require("helmet")
 
+
 app.use(cors({
-  origin: "https://metroevents.vercel.app",
+  origin: process.env.node_env == "production" ? "https://metroevents.vercel.app" : "http://localhost:3000",
   credentials: true,
   exposedHeaders: ['Authorization'],
 }));

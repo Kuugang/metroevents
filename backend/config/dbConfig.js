@@ -189,13 +189,20 @@ async function createReviewsTable() {
 
 async function createNotificationTypesTable() {
   try {
-    const query = `
+    let query = `
       CREATE TABLE IF NOT EXISTS notification_types(
         id SERIAL PRIMARY KEY,
         type VARCHAR UNIQUE
       )
     `;
     await queryDatabase(query);
+    query = "INSERT INTO notification_types (type) VALUES ('Event Registration')"
+    await queryDatabase(query)
+    query = "INSERT INTO notification_types (type) VALUES ('Organizer request')"
+    await queryDatabase(query)
+    query = "INSERT INTO notification_types (type) VALUES ('Event cancelled')"
+    await queryDatabase(query)
+
   } catch (error) {
     console.error("Error creating reviews table:", error);
   }
