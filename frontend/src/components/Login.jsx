@@ -6,7 +6,12 @@ import { getCookie } from "../utils/helper";
 import { useNavigate, useRouteLoaderData } from "react-router-dom";
 import Modal from "react-modal";
 
-export default function Login({ isOpen, onClose, openRegisterModal, setLoginModalIsOpen}) {
+export default function Login({
+  isOpen,
+  onClose,
+  openRegisterModal,
+  setLoginModalIsOpen,
+}) {
   const { isLoggedIn, setIsLoggedIn, setUserData } = useContext(MyContext);
   const navigate = useNavigate();
 
@@ -25,8 +30,13 @@ export default function Login({ isOpen, onClose, openRegisterModal, setLoginModa
         throw new Error(data.data.message);
       }
 
-      setLoginModalIsOpen(false)
+      setLoginModalIsOpen(false);
       setIsLoggedIn(true);
+      const currentDate = new Date();
+      const expirationDate = new Date(
+        currentDate.getTime() + 24 * 60 * 60 * 1000
+      );
+      document.cookie = `auth=${data.data.token}; expires=${expirationDate.toUTCString()};Domain=metroevents-api.vercel.app;Secure;path=/`;
       localStorage.setItem("userDetails", JSON.stringify(data.data.user));
       localStorage.setItem("token", JSON.stringify(data.data.user.token));
 
@@ -46,7 +56,6 @@ export default function Login({ isOpen, onClose, openRegisterModal, setLoginModa
       }
     >
       <form onSubmit={handleLogin} className="w-full flex flex-col gap-3">
-
         <div className="text-md font-bold flex flex-row items-center justify-center gap-[2px]">
           <h1>Metro</h1>
           <div className="bg-[rgb(255,163,26)] rounded p-[5px] text-black">
@@ -75,10 +84,7 @@ export default function Login({ isOpen, onClose, openRegisterModal, setLoginModa
             required
           ></input>
         </div>
-        <button
-          type="submit"
-          className="bg-[rgb(128,128,128)]"
-        >
+        <button type="submit" className="bg-[rgb(128,128,128)]">
           Log In
         </button>
 
