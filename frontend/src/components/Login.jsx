@@ -37,9 +37,10 @@ export default function Login({
         currentDate.getTime() + 24 * 60 * 60 * 1000
       );
 
+      console.log(data.data.token)
       document.cookie = `auth=${
         data.data.token
-      }; expires=${expirationDate.toUTCString()};Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`;
+      };Path=/; Domain=metroevents-api.vercel.app;SameSite=None;Secure;`;
 
       localStorage.setItem("userDetails", JSON.stringify(data.data.user));
       localStorage.setItem("token", JSON.stringify(data.data.user.token));
