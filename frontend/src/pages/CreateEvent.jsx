@@ -37,7 +37,6 @@ export default function CreateEvent() {
     try {
       setIsLoading(true);
       const file = e.target.imgfile.files[0];
-      console.log(file)
       const link = await uploadImage(file);
       const inputs = {
         title: e.target.title.value,

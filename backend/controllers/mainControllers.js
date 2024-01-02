@@ -1082,6 +1082,7 @@ const createEvent = asyncHandler(async (req, res) => {
     query =
       "INSERT INTO event_participants (event_id, user_id, status) VALUES ($1, $2, $3)";
     await queryDatabase(query, [result.id, req.tokenData.id, "accepted"]);
+    cachedEvents.unshift(result)
     return res.status(200).json({ result });
   } catch (error) {
     console.log(error);

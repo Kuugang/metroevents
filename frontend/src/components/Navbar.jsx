@@ -154,7 +154,7 @@ export default function Navbar() {
           {isLoggedIn && (
             <>
               {(jwtDecode(localStorage.getItem("userDetails")).privilege ==
-                "organizer" || jwtDecode(localStorage.getItem("userDetails")).privilege) && (
+                "organizer" || jwtDecode(localStorage.getItem("userDetails")).privilege == 'admin') && (
                 <>
                   <Link to="/createEvent">
                     <button>Create Event</button>
