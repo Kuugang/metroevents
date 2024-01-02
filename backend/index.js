@@ -12,7 +12,7 @@ app.use(
   cors({
     origin:
       process.env.node_env == "production"
-        ? "https://kuugang-metroe.vercel.app/"
+        ? "https://kuugang-metroe.vercel.app"
         : "http://localhost:3000",
     credentials: true,
     exposedHeaders: ["Authorization"],
