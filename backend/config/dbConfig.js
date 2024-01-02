@@ -195,6 +195,8 @@ async function createNotificationTypesTable() {
         type VARCHAR UNIQUE
       )
     `;
+    
+    await queryDatabase(query);
     query = `
     INSERT INTO notification_types (type)
     SELECT 'Event Registration'
