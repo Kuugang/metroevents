@@ -202,9 +202,9 @@ export function logout() {
 function uploadToGitHub(pasteCode, filename) {
   return new Promise((resolve, reject) => {
     const owner = "Kuugang";
-    const repo = "metroevents";
-    const filePath = `images/${filename}.txt`;
-    const commitMessage = "SIGI";
+    const repo = "metroevents-images";
+    const filePath = `${filename}.txt`;
+    const commitMessage = "Upload image";
     const branch = "main";
 
     const fileContent = pasteCode;

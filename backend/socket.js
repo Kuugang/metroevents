@@ -4,7 +4,7 @@ function initSocket(server) {
   ioInstance = require("socket.io")(server, {
     pingTimeout: 600000,
     cors: {
-      origin: ["http://localhost:3000", "https://metroevents.vercel.app"],
+      origin: ["http://localhost:3000", "https://kuugang-metroe.vercel.app"],
       credentials: true,
     },
   });
