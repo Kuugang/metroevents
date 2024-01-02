@@ -6,12 +6,23 @@ import { axiosFetch } from "../utils/axios";
 import { useNavigate } from "react-router-dom";
 import EventForm from "../components/EventForm";
 import CancelEventFormModal from "../components/CancelEventFormModal";
+import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
 
 export default function ManageEvent() {
   const { events, setEvents, eventTypes } = useContext(MyContext);
   const { id } = useParams();
   const [cancelEventFormModalIsOpen, setCancelEventFormModalIsOpen] =
     useState(false);
+
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventType, setEventType] = useState("");
+  const [eventVenue, setEventVenue] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [eventDateTime, setEventDateTime] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -23,64 +34,71 @@ export default function ManageEvent() {
   }, [events]);
 
   async function handleEditEvent(e) {
-    const file = e.target.imgfile.files[0];
+    setIsLoading(true);
+    try {
+      const file = e.target.imgfile.files[0];
 
-    let link;
+      let link;
 
-    if (file) {
-      link = await uploadImage(file);
-    }
+      if (file) {
+        link = await uploadImage(file);
+      }
 
-    const inputs = {
-      title: e.target.title.value,
-      description: e.target.description.value,
-      venue: e.target.venue.value,
-      type: e.target.type.value,
-      datetime: new Date(e.target.datetime.value),
-      image: link,
-    };
-
-    const data = await axiosFetch.put(
-      `/organizer/event?event_id=${currentEvent.id}`,
-      inputs
-    );
-
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
-    }
-
-    let newEvent = {
-      title: inputs.title,
-      description: inputs.description,
-      venue: inputs.venue,
-      type: inputs.type,
-      datetime: e.target.datetime.value,
-    };
-
-    const response = await fetch(link);
-    const imageData = await response.text();
-
-    if (file) {
-      newEvent = {
-        ...newEvent,
-        image: imageData,
+      const inputs = {
+        title: e.target.title.value,
+        description: e.target.description.value,
+        venue: e.target.venue.value,
+        type: e.target.type.value,
+        datetime: new Date(e.target.datetime.value),
+        image: link,
       };
-    }
 
-    const updatedEvents = events.map((event) => {
-      if (event.id === currentEvent.id) {
-        return {
-          ...event,
+      const data = await axiosFetch.put(
+        `/organizer/event?event_id=${currentEvent.id}`,
+        inputs
+      );
+
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
+
+      let newEvent = {
+        title: inputs.title,
+        description: inputs.description,
+        venue: inputs.venue,
+        type: inputs.type,
+        datetime: e.target.datetime.value,
+      };
+
+      const response = await fetch(link);
+      const imageData = await response.text();
+
+      if (file) {
+        newEvent = {
           ...newEvent,
+          image: imageData,
         };
       }
 
-      return event;
-    });
+      const updatedEvents = events.map((event) => {
+        if (event.id === currentEvent.id) {
+          return {
+            ...event,
+            ...newEvent,
+          };
+        }
 
-    setEvents(updatedEvents);
+        return event;
+      });
 
-    navigate(`/event/${id}`);
+      setEvents(updatedEvents);
+      toast.success("Edited event");
+      setIsLoading(false);
+      navigate(`/event/${id}`);
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+    }
   }
 
   async function handleCancelEvent(e) {
@@ -166,10 +184,23 @@ export default function ManageEvent() {
     <>
       {currentEvent && (
         <>
+          {isLoading && <Spinner></Spinner>}
           <EventForm
             onSubmit={handleEditEvent}
             eventTypes={eventTypes}
             currentEvent={currentEvent}
+            eventTitle={eventTitle}
+            setEventTitle={setEventTitle}
+            eventType={eventType}
+            setEventType={setEventType}
+            eventVenue={eventVenue}
+            setEventVenue={setEventVenue}
+            eventDescription={eventDescription}
+            setEventDescription={setEventDescription}
+            eventDateTime={eventDateTime}
+            setEventDateTime={setEventDateTime}
+            imagePreview={imagePreview}
+            setImagePreview={setImagePreview}
           ></EventForm>
           <CancelEventFormModal
             isOpen={cancelEventFormModalIsOpen}

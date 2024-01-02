@@ -18,7 +18,7 @@ import { toast } from "react-toastify";
 function App() {
   const { isLoggedIn, events, setEvents, userData, setUserData } =
     useContext(MyContext);
-  useFetchAllEvents();
+  useFetchAllEvents(1);
   useFetchEventTypes();
 
   const [isConnected, setIsConnected] = useState(socket.connected);

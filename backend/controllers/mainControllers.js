@@ -419,7 +419,7 @@ const getEvents = asyncHandler(async (req, res) => {
   try {
     let { page, user_id, event_id } = req.query;
     //change
-    const pageSize = 5;
+    const pageSize = 100;
 
     let query = "SELECT * FROM votes";
     const votes = (await queryDatabase(query)).rows;
@@ -482,7 +482,6 @@ const getEvents = asyncHandler(async (req, res) => {
               username: matchedUser.username,
             };
           });
-
           e.reviews = matchedReviews;
         }
       });
@@ -586,7 +585,8 @@ const getEvents = asyncHandler(async (req, res) => {
 
       return res.status(200).json(events);
     }
-    return res.status(200).json({events: cachedEvents});
+
+    return res.status(200).json({ events: cachedEvents });
   } catch (error) {
     console.log(error.name, error.message);
     return res.status(500).send("Internal Server Error");
@@ -1082,7 +1082,7 @@ const createEvent = asyncHandler(async (req, res) => {
     query =
       "INSERT INTO event_participants (event_id, user_id, status) VALUES ($1, $2, $3)";
     await queryDatabase(query, [result.id, req.tokenData.id, "accepted"]);
-    cachedEvents.unshift(result)
+    cachedEvents.unshift(result);
     return res.status(200).json({ result });
   } catch (error) {
     console.log(error);
