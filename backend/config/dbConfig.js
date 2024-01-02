@@ -195,14 +195,41 @@ async function createNotificationTypesTable() {
         type VARCHAR UNIQUE
       )
     `;
+    query = `
+    INSERT INTO notification_types (type)
+    SELECT 'Event Registration'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM notification_types WHERE type = 'Event Registration'
+    )
+  `;
     await queryDatabase(query);
-    query = "INSERT INTO notification_types (type) VALUES ('Event Registration')"
-    await queryDatabase(query)
-    query = "INSERT INTO notification_types (type) VALUES ('Organizer request')"
-    await queryDatabase(query)
-    query = "INSERT INTO notification_types (type) VALUES ('Event cancelled')"
-    await queryDatabase(query)
 
+    query = `
+    INSERT INTO notification_types (type)
+    SELECT 'Organizer request'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM notification_types WHERE type = 'Organizer request'
+    )
+  `;
+    await queryDatabase(query);
+
+    query = `
+    INSERT INTO notification_types (type)
+    SELECT 'Event cancelled'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM notification_types WHERE type = 'Event cancelled'
+    )
+  `;
+    await queryDatabase(query);
+
+    query = `
+    INSERT INTO notification_types (type)
+    SELECT 'User privilege update'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM notification_types WHERE type = 'User privilege update'
+    )
+  `;
+    await queryDatabase(query);
   } catch (error) {
     console.error("Error creating reviews table:", error);
   }

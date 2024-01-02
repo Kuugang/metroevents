@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import Modal from "react-modal";
 import { axiosFetch } from "../utils/axios";
+import Spinner from "./Spinner";
+import { toast } from "react-toastify";
 
 export default function Register({ isOpen, onClose, setRegisterModalIsOpen }) {
+  const [isLoading, setIsLoading] = useState(false);
+
   async function handleRegister(e) {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       let inputs = {
@@ -19,74 +24,81 @@ export default function Register({ isOpen, onClose, setRegisterModalIsOpen }) {
       if (data.status !== 200) {
         throw new Error(data.data.message);
       }
-      alert("Registered successfully")
+      toast.success("Registered successfully");
+      setIsLoading(false);
       setRegisterModalIsOpen(false);
     } catch (e) {
-      console.log(e);
+      setIsLoading(false);
+      toast.error(e.message);
     }
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onRequestClose={onClose}
-      className={
-        "w-[400px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-max bg-[rgb(41,41,41)] shadow-md rounded px-8 pt-6 pb-8 mb-4 z-50"
-      }
-    >
-      <form id="registerForm" className="w-full flex flex-col gap-3" onSubmit={handleRegister}>
-        <div className="text-md font-bold flex flex-row items-center justify-center gap-[2px]">
-          <h1>Metro</h1>
-          <div className="bg-[rgb(255,163,26)] rounded p-[5px] text-black">
-            <h1>Events</h1>
+    <>
+      {isLoading && <Spinner></Spinner>}
+      <Modal
+        isOpen={isOpen}
+        onRequestClose={onClose}
+        className={
+          "w-[400px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-max bg-[rgb(41,41,41)] shadow-md rounded px-8 pt-6 pb-8 mb-4 z-50"
+        }
+      >
+        <form
+          id="registerForm"
+          className="w-full flex flex-col gap-3"
+          onSubmit={handleRegister}
+        >
+          <div className="text-md font-bold flex flex-row items-center justify-center gap-[2px]">
+            <h1>Metro</h1>
+            <div className="bg-[rgb(255,163,26)] rounded p-[5px] text-black">
+              <h1>Events</h1>
+            </div>
           </div>
-        </div>
 
-        <h1 className="text-center">Join in on the fun!</h1>
-        <hr className="mb-2"></hr>
+          <h1 className="text-center">Join in on the fun!</h1>
+          <hr className="mb-2"></hr>
 
-        <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2">
+            <input
+              className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              id="registerFirstName"
+              placeholder="First Name"
+              name="firstName"
+              required
+            />
+
+            <input
+              className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              id="registerLastName"
+              placeholder="Last Name"
+              name="lastName"
+              required
+            />
+          </div>
+
           <input
             className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             type="text"
-            id="registerFirstName"
-            placeholder="First Name"
-            name="firstName"
+            id="registerUsername"
+            placeholder="Username"
+            name="username"
             required
           />
 
           <input
             className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            type="text"
-            id="registerLastName"
-            placeholder="Last Name"
-            name="lastName"
+            type="password"
+            id="registerPassword"
+            placeholder="Password"
+            name="password"
             required
           />
-        </div>
 
-        <input
-          className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          type="text"
-          id="registerUsername"
-          placeholder="Username"
-          name="username"
-          required
-        />
-
-        <input
-          className="mb-4 appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          type="password"
-          id="registerPassword"
-          placeholder="Password"
-          name="password"
-          required
-        />
-
-        <button className="bg-[rgb(128,128,128)]">
-          Register
-        </button>
-      </form>
-    </Modal>
+          <button className="bg-[rgb(128,128,128)]">Register</button>
+        </form>
+      </Modal>
+    </>
   );
 }

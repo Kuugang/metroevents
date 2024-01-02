@@ -5,6 +5,7 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import Modal from "react-modal";
 import { MyContextProvider } from "./utils/Context";
+import { ToastContainer } from "react-toastify";
 
 Modal.setAppElement("#root");
 
@@ -13,6 +14,7 @@ root.render(
   <React.StrictMode>
     <MyContextProvider>
       <App />
+      <ToastContainer />
     </MyContextProvider>
   </React.StrictMode>
 );

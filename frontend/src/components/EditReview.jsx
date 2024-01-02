@@ -6,9 +6,7 @@ export default function EditReview({
   isOpen,
   onClose,
   initialReview,
-  setEditReviewIsOpen,
-  reviews,
-  setReviews,
+  handleEditReview
 }) {
   const [editValue, setEditValue] = useState("");
 
@@ -18,35 +16,7 @@ export default function EditReview({
     }
   }, [initialReview]);
 
-  async function handleEditReview(e) {
-    e.preventDefault();
 
-    const inputs = {
-      review: e.target.review.value,
-    };
-
-    const data = await axiosFetch.put(
-      `/event/review?review_id=${initialReview.id}`,
-      inputs
-    );
-
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
-    }
-
-    const updatedReviews = reviews.map((review) => {
-      if (review.id == initialReview.id) {
-        return {
-          ...review,
-          review: inputs.review,
-        };
-      }
-      return review;
-    });
-
-    setReviews(updatedReviews);
-    setEditReviewIsOpen(false);
-  }
 
   return (
     <Modal

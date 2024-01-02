@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import { getEventById, joinEvent, leaveEvent } from "../utils/helper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import { toast } from "react-toastify";
 import { IoLocationOutline } from "react-icons/io5";
 import { LuClock10 } from "react-icons/lu";
 
@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { axiosFetch } from "../utils/axios";
 import EditReview from "../components/EditReview";
+import Spinner from "../components/Spinner";
 
 export default function EventDetails() {
   const { userData, events, privilege } = useContext(MyContext);
@@ -36,6 +37,7 @@ export default function EventDetails() {
   const [reviews, setReviews] = useState(null);
   const [editReviewIsOpen, setEditReviewIsOpen] = useState(false);
   const [currentReview, setCurrentReview] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   function updateUpvotes(array) {
     setUpVotes(array.filter((v) => v.vote == true).length);
@@ -79,37 +81,64 @@ export default function EventDetails() {
   }
 
   async function handleJoinEvent() {
-    joinEvent(id).then((data) => {
-      setEventJoinStatus("pending");
-      data.firstname = userData.firstname;
-      data.lastname = userData.lastname;
-      data.username = userData.username;
-      setParticipants((participants) => [...participants, data]);
-    });
+    setIsLoading(true);
+    joinEvent(id)
+      .then((data) => {
+        setEventJoinStatus("pending");
+        data.firstname = userData.firstname;
+        data.lastname = userData.lastname;
+        data.username = userData.username;
+        setParticipants((participants) => [...participants, data]);
+        toast.success("Registered for event");
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        toast.error(error.message);
+        setIsLoading(false);
+      });
   }
 
   async function handleLeaveEvent() {
-    leaveEvent(id).then((data) => {
-      setEventJoinStatus("");
-      setParticipants(participants.filter((p) => p.user_id !== userData.id));
-    });
+    setIsLoading(true);
+    leaveEvent(id)
+      .then((data) => {
+        setEventJoinStatus("");
+        setParticipants(participants.filter((p) => p.user_id !== userData.id));
+        toast.success("Left event");
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        toast.error(error.message);
+        setIsLoading(false);
+      });
   }
 
   async function handleReview(e) {
     e.preventDefault();
-    let inputs = {
-      review: e.target.review.value,
-    };
+    setIsLoading(true);
+    try {
+      let inputs = {
+        review: e.target.review.value,
+      };
 
-    const data = await axiosFetch.post(`/event/review?event_id=${id}`, inputs);
+      const data = await axiosFetch.post(
+        `/event/review?event_id=${id}`,
+        inputs
+      );
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
-    }
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
 
-    if (data.status === 200) {
-      e.target.reset();
-      setReviews((reviews) => [data.data, ...reviews]);
+      if (data.status === 200) {
+        e.target.reset();
+        setReviews((reviews) => [data.data, ...reviews]);
+        toast.success("Reviewed event");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
   }
 
@@ -122,22 +151,66 @@ export default function EventDetails() {
     setEditReviewIsOpen(false);
   }
 
-  async function handleDeleteReview(e) {
-    e.preventDefault();
+  async function handleDeleteReview(review) {
+    setIsLoading(true);
 
-    const review_id = e.target.parentElement.parentElement.id;
+    try {
+      const review_id = review.id;
 
-    const data = await axiosFetch.delete(
-      `/event/review?review_id=${review_id}`
-    );
+      const data = await axiosFetch.delete(
+        `/event/review?review_id=${review_id}`
+      );
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
+
+      if (data.status === 200) {
+        let newReviews = reviews.filter((review) => review.id != review_id);
+        setReviews(newReviews);
+        toast.success("Deleted review");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
+  }
 
-    if (data.status === 200) {
-      let newReviews = reviews.filter((review) => review.id != review_id);
-      setReviews(newReviews);
+  async function handleEditReview(e) {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const inputs = {
+        review: e.target.review.value,
+      };
+
+      const data = await axiosFetch.put(
+        `/event/review?review_id=${currentReview.id}`,
+        inputs
+      );
+
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
+
+      const updatedReviews = reviews.map((review) => {
+        if (review.id == currentReview.id) {
+          return {
+            ...review,
+            review: inputs.review,
+          };
+        }
+        return review;
+      });
+
+      setReviews(updatedReviews);
+      setEditReviewIsOpen(false);
+      toast.success("Edited review");
+      setIsLoading(false);
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
   }
 
@@ -192,6 +265,7 @@ export default function EventDetails() {
 
   return (
     <>
+      {isLoading && <Spinner></Spinner>}
       {event && (
         <>
           <div
@@ -224,10 +298,10 @@ export default function EventDetails() {
                   </div>
                 </div>
 
-                <Link to = {`/${event.host.username}`}>
-                <p className="font-semibold">
-                  Hosted by {event.host.firstname} {event.host.lastname}
-                </p>
+                <Link to={`/${event.host.username}`}>
+                  <p className="font-semibold">
+                    Hosted by {event.host.firstname} {event.host.lastname}
+                  </p>
                 </Link>
 
                 {event.is_cancelled && (
@@ -377,7 +451,9 @@ export default function EventDetails() {
 
             <div className="flex flex-col items-start gap-3 border p-3 rounded bg-[#292929]">
               <div className="flex flex-row items-center justify-center bg-[#ffa31a] py-2 px-3 rounded">
-                <h1 className="font-bold text-black text-lg">Event Participants</h1>
+                <h1 className="font-bold text-black text-lg">
+                  Event Participants
+                </h1>
               </div>
               <div className="flex flex-col gap-2">
                 {participants.filter((p) => p.status === "accepted").length >
@@ -389,8 +465,12 @@ export default function EventDetails() {
                           key={p.id}
                           className={`flex flex-row gap-2 items-end`}
                         >
-                          <h1 className="font-semibold text-sm">{p.firstname}</h1>
-                          <h1 className="font-semibold text-sm">{p.lastname}</h1>
+                          <h1 className="font-semibold text-sm">
+                            {p.firstname}
+                          </h1>
+                          <h1 className="font-semibold text-sm">
+                            {p.lastname}
+                          </h1>
                           <h1 className="font-semibold text-xs">
                             {p.username}
                           </h1>
@@ -425,7 +505,7 @@ export default function EventDetails() {
             <div className="flex flex-col items-center gap-1 w-full">
               <h1>Reviews</h1>
               {reviews && reviews.length > 0 ? (
-                <div>
+                <div className="min-w-[250px]">
                   {reviews.map((review) => {
                     return (
                       <div
@@ -433,32 +513,37 @@ export default function EventDetails() {
                         id={review.id}
                         className="rounded p-3 bg-[#292929] break-words whitespace-pre-wrap w-full max-w-[60vw] relative"
                       >
-                        {review.user_id === userData.id && (
-                          <>
+                        <div className="flex flex-row justify-between items-center w-full">
+                          <Link
+                            to={`/${review.username}`}
+                            className="font-semibold text-sm inline underline"
+                          >
+                            u/{review.username}
+                          </Link>
+
+                          {review.user_id === userData.id && (
                             <div className="flex flex-row top-1 right-1">
                               <button
                                 onClick={() => openEditReviewModal(review)}
                               >
                                 <FontAwesomeIcon
                                   icon={farEdit}
-                                  className="fa-md"
+                                  className="fa-xs"
                                 />
                               </button>
                               <button
-                                onClick={handleDeleteReview}
+                                onClick={() => handleDeleteReview(review)}
                                 className="text-red-500"
+                                id={review.id}
                               >
                                 <FontAwesomeIcon
                                   icon={farTrashCan}
-                                  className="fa-md"
+                                  className="fa-xs"
                                 />
                               </button>
                             </div>
-                          </>
-                        )}
-                        <Link to = {`/${review.username}`}className="font-semibold text-sm inline">
-                          u/{review.username}
-                        </Link>
+                          )}
+                        </div>
                         <p className="text-sm">{review.review}</p>
                       </div>
                     );
@@ -470,6 +555,7 @@ export default function EventDetails() {
                     setEditReviewIsOpen={setEditReviewIsOpen}
                     reviews={reviews}
                     setReviews={setReviews}
+                    handleEditReview={handleEditReview}
                   />
                 </div>
               ) : (

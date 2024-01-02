@@ -8,11 +8,14 @@ import Register from "./Register";
 import Login from "./Login";
 import { axiosFetch } from "../utils/axios";
 import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
+import Spinner from "./Spinner";
 
 export default function Navbar() {
   const [registerModalIsOpen, setRegisterModalIsOpen] = useState(false);
   const [loginModalIsOpen, setLoginModalIsOpen] = useState(false);
   const [notificationsIsOpen, setNoticationsIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { userData, setUserData, isLoggedIn, setIsLoggedIn } =
     useContext(MyContext);
@@ -42,14 +45,18 @@ export default function Navbar() {
   }
 
   async function handleLogout() {
+    setIsLoading(true);
     logout()
       .then(() => {
+        toast.success("Logged out");
+        setIsLoading(false)
         setIsLoggedIn(false);
         setUserData("");
         navigate("/");
       })
       .catch((error) => {
-        console.log(error);
+        toast.error(error.message);
+        setIsLoading(false);
       });
   }
 
@@ -131,6 +138,7 @@ export default function Navbar() {
 
   return (
     <>
+      {isLoading && <Spinner></Spinner>}
       <nav className="fixed shadow-2xl text-md top-0 flex flex-row justify-between w-full p-3 items-center bg-[rgb(41,41,41)] border-b-[rgb(128,128,128)] z-50">
         <Link
           to={isLoggedIn ? "dashboard" : "/"}

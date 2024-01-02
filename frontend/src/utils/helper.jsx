@@ -1,5 +1,5 @@
 import { axiosFetch } from "./axios";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MyContext } from "./Context";
 import { v4 as uuidv4 } from "uuid";
 
@@ -56,6 +56,29 @@ export async function useFetchAllEvents(
   }, []);
 }
 
+export const useFetchEventsByPage = (page) => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const url = `getEvents?page=${page}`;
+        let data = await axiosFetch(url);
+        setEvents(data.events);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [page]);
+
+  return { events, loading };
+};
 
 export async function getUsers() {
   return new Promise((resolve, reject) => {
@@ -70,7 +93,6 @@ export async function getUsers() {
       });
   });
 }
-
 
 export async function getUser(username) {
   return new Promise((resolve, reject) => {
@@ -143,9 +165,11 @@ export async function useFetchEventTypes() {
   const { userData, setEventTypes } = useContext(MyContext);
   useEffect(() => {
     async function fetchData() {
-      if (userData.privilege != "organizer" && userData.privilege != "admin") return;
+      if (userData.privilege != "organizer" && userData.privilege != "admin")
+        return;
       try {
-        let url = userData.privilege == "admin" ? "/admin/event" : "/organizer/event";
+        let url =
+          userData.privilege == "admin" ? "/admin/event" : "/organizer/event";
         const data = (await axiosFetch(url)).data;
         setEventTypes(data);
       } catch (error) {
@@ -162,8 +186,6 @@ export function logout() {
       .post("/user/logout")
       .then((response) => {
         if (response.status == 200) {
-          document.cookie =
-            "jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
           localStorage.removeItem("userDetails");
           localStorage.removeItem("token");
           resolve(true);

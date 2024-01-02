@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const { queryDatabase, initializeDB } = require("../config/dbConfig");
+const { getIoInstance } = require("../socket");
 const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -234,7 +235,7 @@ const verifyOrganizerToken = async (req, res, next) => {
 
 const verifyAdminToken = async (req, res, next) => {
   const { authorization } = req.headers;
-  
+
   if (!authorization) {
     return res.status(401).send("Unauthorized");
   }
@@ -261,36 +262,41 @@ const verifyAdminToken = async (req, res, next) => {
 };
 
 const register = asyncHandler(async (req, res) => {
-  let { username, password, firstName, lastName } = req.body;
-  if (
-    !username ||
-    !password ||
-    !firstName ||
-    !lastName ||
-    username.trim().length === 0 ||
-    password.trim().length === 0 ||
-    firstName.trim().length === 0 ||
-    lastName.trim().length === 0
-  )
-    return res.status(400).send("Please provide a username and password");
-
-  const result = await queryDatabase(
-    "SELECT * FROM users where username = $1",
-    [username]
-  );
-  if (result.length > 0) return res.status(409).send("Username already taken");
-
-  const salt = bcrypt.genSaltSync(10);
-  password = bcrypt.hashSync(password, salt);
-
-  const newUser = (
-    await queryDatabase(
-      "INSERT INTO users (firstname, lastName, username, password, privilege) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [firstName, lastName, username, password, "user"]
+  try {
+    let { username, password, firstName, lastName } = req.body;
+    if (
+      !username ||
+      !password ||
+      !firstName ||
+      !lastName ||
+      username.trim().length === 0 ||
+      password.trim().length === 0 ||
+      firstName.trim().length === 0 ||
+      lastName.trim().length === 0
     )
-  ).rows[0];
-  cachedUsers.unshift(newUser);
-  return res.status(200).send("User successfully created");
+      return res.status(400).send("Please provide a username and password");
+
+    const result = await queryDatabase(
+      "SELECT * FROM users where username = $1",
+      [username]
+    );
+    if (result.length > 0)
+      return res.status(409).send("Username already taken");
+
+    const salt = bcrypt.genSaltSync(10);
+    password = bcrypt.hashSync(password, salt);
+
+    const newUser = (
+      await queryDatabase(
+        "INSERT INTO users (firstname, lastName, username, password, privilege) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [firstName, lastName, username, password, "user"]
+      )
+    ).rows[0];
+    cachedUsers.unshift(newUser);
+    return res.status(200).send("User successfully created");
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -310,7 +316,7 @@ const login = asyncHandler(async (req, res) => {
       await queryDatabase("SELECT * FROM users WHERE username = $1", [username])
     ).rows[0];
 
-    if (!user === 0) {
+    if (!user) {
       return res.status(400).send("Invalid username or password");
     }
 
@@ -405,7 +411,6 @@ const logout = asyncHandler(async (req, res) => {
   let { token } = req.cookies;
 
   const query = "INSERT INTO blacklist (token) VALUES ($1)";
-
   const result = await queryDatabase(query, [token]);
   return res.status(200).send("Loggged out successfully");
 });
@@ -413,7 +418,8 @@ const logout = asyncHandler(async (req, res) => {
 const getEvents = asyncHandler(async (req, res) => {
   try {
     let { page, user_id, event_id } = req.query;
-    const pageSize = 20;
+    //change
+    const pageSize = 5;
 
     let query = "SELECT * FROM votes";
     const votes = (await queryDatabase(query)).rows;
@@ -580,10 +586,7 @@ const getEvents = asyncHandler(async (req, res) => {
 
       return res.status(200).json(events);
     }
-
-    // query = "SELECT * FROM `events` ORDER BY id DESC";
-    // const results = await queryDatabase(query);
-    // return res.status(200).send(results);
+    return res.status(200).json({events: cachedEvents});
   } catch (error) {
     console.log(error.name, error.message);
     return res.status(500).send("Internal Server Error");
@@ -674,32 +677,43 @@ const userGetNotifications = asyncHandler(async (req, res) => {
 const approveEventRegistration = asyncHandler(async (req, res) => {
   try {
     const { event_id, user_id } = req.query;
-    let query = "SELECT * FROM events WHERE id = $1 AND organizer_id = $2";
-    let result = (await queryDatabase(query, [event_id, req.tokenData.id]))
-      .rows;
-    if (result.length === 0) return res.status(400);
 
-    query =
-      "SELECT * FROM event_participants WHERE user_id = $1 AND event_id = $2";
-    result = (await queryDatabase(query, [user_id, event_id])).rows;
-    if (result.length === 0) return res.status(400);
+    const events = await getCachedEvents();
+    const participants = await getCachedEventParticipants();
 
-    if (result[0].status === "accepted") {
-      return res.status(400).send("User is already accepted");
+    //for check
+    const participant = participants.find((p) => {
+      return p.user_id == user_id;
+    });
+
+    let event;
+    if (req.tokenData.privilege == "admin") {
+      event = events.find((e) => {
+        return e.id == event_id;
+      });
+    } else {
+      event = events.find((e) => {
+        return e.id == event_id && organizer_id == req.tokenData.id;
+      });
     }
-
-    query = "SELECT * FROM events WHERE id = $1";
-    const event = (await queryDatabase(query, [event_id])).rows;
-    const event_title = event[0].title;
 
     query =
       "UPDATE event_participants SET status = $1 WHERE user_id = $2 AND event_id = $3";
     await queryDatabase(query, ["accepted", user_id, event_id]);
 
-    let message = `Your registration request for ${event_title} was accepted`;
-    let notification = (await getUserNotifications(user_id, 1))[0];
+    const update = participants.map((p) => {
+      if (p.user_id == user_id) {
+        return {
+          ...p,
+          status: "accepted",
+        };
+      }
+      return p;
+    });
+    cachedEventParticipants = update;
 
-    console.log(notification);
+    let message = `Your registration request for ${event.title} was accepted`;
+    let notification = (await getUserNotifications(user_id, 1))[0];
 
     if (!notification) {
       query =
@@ -729,7 +743,11 @@ const approveEventRegistration = asyncHandler(async (req, res) => {
       });
       cachedNotifications = updatedNotifications;
     }
-
+    const io = getIoInstance();
+    io.emit("Send notification", {
+      user_id: user_id,
+      message: message,
+    });
     return res.status(200).json({ status: "accepted" });
   } catch (error) {
     console.log(error);
@@ -741,28 +759,45 @@ const rejectEventRegistration = asyncHandler(async (req, res) => {
   try {
     const { event_id, user_id } = req.query;
 
-    let query = "SELECT * FROM events WHERE id = $1 AND organizer_id = $2";
-    let result = (await queryDatabase(query, [event_id, req.tokenData.id]))
-      .rows;
-    if (result.length === 0) return res.status(400);
+    const events = await getCachedEvents();
+    const participants = await getCachedEventParticipants();
 
-    query =
-      "SELECT * FROM event_participants WHERE user_id = $1 AND event_id = $2";
-    result = (await queryDatabase(query, [user_id, event_id])).rows;
-    if (result.length === 0) return res.status(400);
-    if (result[0].status === "rejected") {
-      return res.status(400).send("User is already rejected");
+    //for check
+    const participant = participants.find((p) => {
+      return p.user_id == user_id;
+    });
+
+    let event;
+    if (req.tokenData.privilege == "admin") {
+      event = events.find((e) => {
+        return e.id == event_id;
+      });
+    } else {
+      event = events.find((e) => {
+        return e.id == event_id && organizer_id == req.tokenData.id;
+      });
     }
-
-    query = "SELECT * FROM events WHERE id = $1";
-    const event = (await queryDatabase(query, [event_id])).rows;
-    const event_title = event[0].title;
 
     query =
       "UPDATE event_participants SET status = $1 WHERE user_id = $2 AND event_id = $3";
     await queryDatabase(query, ["rejected", user_id, event_id]);
 
-    let message = `Your registration request for ${event_title} was rejected`;
+    const update = participants.map((p) => {
+      if (p.user_id == user_id) {
+        return {
+          ...p,
+          status: "rejected",
+        };
+      }
+      return p;
+    });
+    cachedEventParticipants = update;
+
+    query =
+      "UPDATE event_participants SET status = $1 WHERE user_id = $2 AND event_id = $3";
+    await queryDatabase(query, ["rejected", user_id, event_id]);
+
+    let message = `Your registration request for ${event.title} was rejected`;
     let notification = (await getUserNotifications(user_id, 1))[0];
 
     if (!notification) {
@@ -795,7 +830,11 @@ const rejectEventRegistration = asyncHandler(async (req, res) => {
       });
       cachedNotifications = updatedNotifications;
     }
-
+    const io = getIoInstance();
+    io.emit("Send notification", {
+      user_id: user_id,
+      message: message,
+    });
     return res.status(200).json({ status: "rejected" });
   } catch (error) {
     console.log(error);
@@ -869,16 +908,17 @@ const joinOrganizers = asyncHandler(async (req, res) => {
     );
 
     const user = check.rows[0];
-    console.log(cachedUsers);
 
     if (user != undefined && user.privilege === "organizer")
       return res.status(200).send("You are already an organizer");
     else {
-      await queryDatabase(
-        "INSERT INTO requests (user_id, type, message) VALUES ($1, $2, $3)",
-        [userToken.id, 1, message]
-      );
-      return res.status(200).send("Organizer request pending");
+      const result = (
+        await queryDatabase(
+          "INSERT INTO requests (user_id, type, message) VALUES ($1, $2, $3) RETURNING *",
+          [userToken.id, 1, message]
+        )
+      ).rows[0];
+      return res.status(200).send(result);
     }
   } catch (error) {
     return res.status(500).send("Something went wrong" + error);
@@ -1005,6 +1045,14 @@ const createEvent = asyncHandler(async (req, res) => {
     if (!title || !description || !venue || !type || !datetime || !image)
       return res.status(400).send("Please enter all fields");
 
+    const eventDateTime = new Date(datetime);
+
+    const currentDate = new Date();
+
+    if (eventDateTime < currentDate) {
+      return res.status(400).send("Event datetime cannot be in the past");
+    }
+
     const eventType = (
       await queryDatabase("SELECT * FROM event_types WHERE event_name = $1", [
         type,
@@ -1079,6 +1127,14 @@ const updateEvent = asyncHandler(async (req, res) => {
 
     if (!event_id)
       return res.status(400).send("Please provide a valid event_id");
+
+    const eventDateTime = new Date(datetime);
+
+    const currentDate = new Date();
+
+    if (eventDateTime < currentDate) {
+      return res.status(400).send("Event datetime cannot be in the past");
+    }
 
     let query;
     let result;
@@ -1221,6 +1277,14 @@ const adminSetUserPrivilege = asyncHandler(async (req, res) => {
     await queryDatabase(query, [privilege, user_id]);
 
     setUserPrivilege(user_id, privilege);
+
+    let notification = (await getUserNotifications(user_id, 4))[0];
+
+    const io = getIoInstance();
+    io.emit("Update user privilege", {
+      user_id: user_id,
+      privilege: privilege,
+    });
 
     return res.status(200).send("Updated user privilege");
   } catch (error) {

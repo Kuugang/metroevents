@@ -1,12 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
 import { MyContext } from "../utils/Context";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
-import { getCookie } from "../utils/helper";
+import { useFetchAllEvents, useFetchEventsByPage } from "../utils/helper";
+import { axiosFetch } from "../utils/axios";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isLoggedIn, setIsLoggedIn, setUserDetails, events } = useContext(MyContext);
+  const { isLoggedIn, setIsLoggedIn, setUserDetails, events, setEvents } =
+    useContext(MyContext);
+
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -14,7 +20,7 @@ export default function Dashboard() {
         jwtDecode(localStorage.getItem("token")).privilege != null &&
         isLoggedIn == false
       ) {
-        setIsLoggedIn(true)
+        setIsLoggedIn(true);
         setUserDetails(JSON.parse(localStorage.getItem("userDetails")));
       }
     } catch (error) {
@@ -22,10 +28,49 @@ export default function Dashboard() {
     }
   }, [isLoggedIn]);
 
+  // useEffect(() => {
+  //   console.log(page)
+  //   const fetchData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const url = `getEvents?page=${page}`;
+  //       const data = await axiosFetch(url);
+  //       setEvents((prevEvents) => [...data.data.events, ...prevEvents]);
+  //       setLoading(false);
+  //     } catch (error) {
+  //       console.error("Error fetching events:", error);
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [page]);
+
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       const target = entries[0];
+  //       if (target.isIntersecting) {
+  //         setPage((prevPage) => prevPage + 1);
+  //       }
+  //     },
+  //     { threshold: 0.5 }
+  //   );
+
+  //   if (containerRef.current) {
+  //     observer.observe(containerRef.current);
+  //   }
+
+  //   return () => {
+  //     if (containerRef.current) {
+  //       observer.unobserve(containerRef.current);
+  //     }
+  //   };
+  // }, [containerRef]);
 
   return (
     <div className="w-full">
-      {(events.length > 0) ? (
+      {events.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {events.map((event) => {
             return (

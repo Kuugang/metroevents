@@ -5,13 +5,17 @@ import RequestOrganizerModal from "../components/RequestOrganizerModal";
 import { getUserEvents, getUser } from "../utils/helper";
 import { Link, useParams } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
+import { toast } from "react-toastify";
+import Spinner from "../components/Spinner";
 
 export default function Profile() {
   const { username } = useParams();
-  const { isLoggedIn, userData, events, setEvents } = useContext(MyContext);
+  const { isLoggedIn, userData, setUserData, events, setEvents } =
+    useContext(MyContext);
   const [currentUser, setCurrentUser] = useState(null);
   const [userEvents, setUserEvents] = useState(null);
-  const [tab, setTab] = useState("Interacted Events");
+  const [tab, setTab] = useState("Joined Events");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [requestOrganizerModalIsOpen, setRequestOrganizerModalIsOpen] =
     useState(false);
@@ -25,16 +29,28 @@ export default function Profile() {
   }
 
   async function handleJoinOrganizerRequest(e) {
-    e.preventDefault();
-    const data = await axiosFetch.post("/user/joinOrganizers", {
-      message: e.target.message.value,
-    });
+    try {
+      e.preventDefault();
+      setIsLoading(true);
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
+      const data = await axiosFetch.post("/user/joinOrganizers", {
+        message: e.target.message.value,
+      });
+
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
+      const updatedUserData = { ...userData };
+      updatedUserData.requests.unshift(data.data);
+      setUserData(updatedUserData);
+      toast.success("Organizer request pending");
+      setIsLoading(false);
+      closeRequestOrganizerModal();
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+      closeRequestOrganizerModal();
     }
-
-    alert("Organizer Request pending");
   }
 
   function changeTab(tab) {
@@ -71,11 +87,14 @@ export default function Profile() {
 
   return (
     <>
+      {isLoading && (
+        <Spinner></Spinner>
+      )}
       <div className="mx-auto flex flex-row items-center justify-center gap-2 mb-4">
         {currentUser && (
           <>
-            <button onClick={() => changeTab("Interacted Events")}>
-              Interacted Events
+            <button onClick={() => changeTab("Joined Events")}>
+              Joined Events
             </button>
             <button onClick={() => changeTab("Reviews")}>Reviews</button>
             <>
@@ -92,37 +111,40 @@ export default function Profile() {
 
       <div className="flex flex-row gap-2 px-64">
         <div className="w-[60%]">
-          {tab == "Interacted Events" && (
+          {tab == "Joined Events" && (
             <>
-              {(userEvents && (userEvents.filter((e) => {
-                    return e.organizer_id != currentUser.id
-                  })).length > 0 )? (
+              {userEvents &&
+              userEvents.filter((e) => {
+                return e.organizer_id != currentUser.id;
+              }).length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  {userEvents.filter((e) => {
-                    return e.organizer_id != currentUser.id
-                  }).map((e) => {
-                    return (
-                      <Link
-                        className="flex flex-col justify-center items-center w-full px-4 py-2 bg-[#808080] shadow-2xl border-[black] rounded"
-                        to={`/event/${e.id}`}
-                        key={e.id}
-                        id={e.id}
-                      >
-                        <div>
-                          <img
-                            src={e.image}
-                            alt="Event Image"
-                            className="h-[300px] rounded"
-                          />
-                        </div>
-                        <h1 className="text-md">{e.title}</h1>
-                        <h1 className="text-xs mb-4">{e.type} event</h1>
-                        <p className="truncate text-xs overflow-x-hidden">
-                          {e.description}
-                        </p>
-                      </Link>
-                    );
-                  })}
+                  {userEvents
+                    .filter((e) => {
+                      return e.organizer_id != currentUser.id;
+                    })
+                    .map((e) => {
+                      return (
+                        <Link
+                          className="flex flex-col justify-center items-center w-full px-4 py-2 bg-[#808080] shadow-2xl border-[black] rounded"
+                          to={`/event/${e.id}`}
+                          key={e.id}
+                          id={e.id}
+                        >
+                          <div>
+                            <img
+                              src={e.image}
+                              alt="Event Image"
+                              className="h-[300px] rounded"
+                            />
+                          </div>
+                          <h1 className="text-md">{e.title}</h1>
+                          <h1 className="text-xs mb-4">{e.type} event</h1>
+                          <p className="truncate text-xs overflow-x-hidden">
+                            {e.description}
+                          </p>
+                        </Link>
+                      );
+                    })}
                 </div>
               ) : (
                 <p>Nothing here yet</p>

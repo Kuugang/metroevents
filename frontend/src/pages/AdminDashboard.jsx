@@ -8,84 +8,120 @@ import { useNavigate } from "react-router-dom";
 import EventTypes from "../components/admin/EventTypes";
 import Users from "../components/admin/Users";
 import OrganizerRequests from "../components/admin/OrganizerRequests";
+import { toast } from "react-toastify";
+import Spinner from "../components/Spinner";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("Users");
-
   const [editModeMap, setEditModeMap] = useState({});
   const [editValues, setEditValues] = useState({});
   const [users, setUsers] = useState({});
   const [organizerRequests, setOrganizerRequests] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { eventTypes, setEventTypes } = useContext(MyContext);
+  const { events, setEvents, eventTypes, setEventTypes } = useContext(MyContext);
 
   async function handleNewEventType(e) {
-    e.preventDefault();
+    setIsLoading(true);
+    try {
+      e.preventDefault();
 
-    const input = {
-      event_type: e.target.event_type.value,
-    };
+      const input = {
+        event_type: e.target.event_type.value,
+      };
 
-    const data = await axiosFetch.post(`/admin/event`, input);
+      const data = await axiosFetch.post(`/admin/event`, input);
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
+      e.target.event_type.value = "";
+      setIsLoading(false);
+      toast.success("Created new event type");
+      setEventTypes((eventTypes) => [data.data, ...eventTypes]);
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
-    e.target.event_type.value = "";
-    setEventTypes((eventTypes) => [data.data, ...eventTypes]);
   }
 
-  async function handleDeleteEventType(e) {
-    e.preventDefault();
-    const id = e.target.parentElement.parentElement.id;
+  async function handleDeleteEventType(id) {
+    setIsLoading(true);
+    try {
+      const data = await axiosFetch.delete(`/admin/event?event_type_id=${id}`);
 
-    const data = await axiosFetch.delete(`/admin/event?event_type_id=${id}`);
+      if (data.status !== 200) {
+        throw new Error(data.data.message);
+      }
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
+      const newEventTypes = eventTypes.filter((et) => {
+        return et.id != id;
+      });
+      toast.success("Deleted event type");
+      setIsLoading(false);
+      setEventTypes(newEventTypes);
+
+      const newEvents = events.filter((e) => {
+        return e.event_type_id != id;
+      })
+      setEvents(newEvents)
+    } catch (error) {
+      toast.error(error.name);
+      setIsLoading(false);
     }
-
-    const newEventTypes = eventTypes.filter((et) => {
-      return et.id != id;
-    });
-
-    setEventTypes(newEventTypes);
   }
 
   async function handleSaveNewEventType(id, event_name) {
-    setEditValues((prevEditValues) => ({
-      ...prevEditValues,
-      [id]: event_name,
-    }));
+    setIsLoading(false);
+    try {
+      setEditValues((prevEditValues) => ({
+        ...prevEditValues,
+        [id]: event_name,
+      }));
 
-    setEditModeMap((prevState) => ({
-      ...prevState,
-      [id]: !prevState[id],
-    }));
+      setEditModeMap((prevState) => ({
+        ...prevState,
+        [id]: !prevState[id],
+      }));
 
-    const newType = editValues[id];
+      const newType = editValues[id];
 
-    const data = await axiosFetch.put(`/admin/event?event_type_id=${id}`, {
-      new_event_type: newType,
-    });
+      const data = await axiosFetch.put(`/admin/event?event_type_id=${id}`, {
+        new_event_type: newType,
+      });
 
-    if (data.status !== 200) {
-      throw new Error(data.data.message);
+      const update = eventTypes.map((e) => {
+        if (e.id === id) {
+          return {
+            ...e,
+            event_name: newType,
+          };
+        }
+
+        return e;
+      });
+
+      toast.success("New event type saved");
+      setIsLoading(false);
+      setEventTypes(update);
+      const newEvents = events.map((e) => {
+        if(e.event_type_id == id){
+          return{
+            ...e,
+            type: newType,
+          }
+        }
+        return e;
+      })
+
+      console.log(newEvents)
+
+      setEvents(newEvents)
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
-
-    const update = eventTypes.map((e) => {
-      if (e.id === id) {
-        return {
-          ...e,
-          event_name: newType,
-        };
-      }
-
-      return e;
-    });
-
-    setEventTypes(update);
   }
 
   const handleEditEvent = (id, event_name) => {
@@ -111,75 +147,102 @@ export default function AdminDashboard() {
   };
 
   async function handleUpdateUserPrivilege(e, user_id) {
-    e.preventDefault();
+    setIsLoading(true);
+    try {
+      e.preventDefault();
 
-    const input = {
-      privilege: e.target.privilege.value,
-    };
-    const data = await axiosFetch.post(
-      `/admin/users?user_id=${user_id}`,
-      input
-    );
+      const input = {
+        privilege: e.target.privilege.value,
+      };
+      const data = await axiosFetch.post(
+        `/admin/users?user_id=${user_id}`,
+        input
+      );
 
-    if (data.status !== 200) {
-      return new Error(data.data.message);
-    }
-
-    const updatedUsers = users.map((u) => {
-      if (u.id == user_id) {
-        return {
-          ...u,
-          privilege: input.privilege,
-        };
+      if (data.status !== 200) {
+        return new Error(data.data.message);
       }
-      return u;
-    });
-    setUsers(updatedUsers);
-    alert("updated user privilege");
+
+      const updatedUsers = users.map((u) => {
+        if (u.id == user_id) {
+          return {
+            ...u,
+            privilege: input.privilege,
+          };
+        }
+        return u;
+      });
+      toast.success("Updated user privilege");
+      setIsLoading(false);
+      setUsers(updatedUsers);
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+    }
   }
 
   async function handleAcceptOrganizerRequst(request) {
-    const inputs = {
-      user_id: request.user_id,
-      request_id: request.id,
-    };
+    setIsLoading(true);
+    try {
+      const inputs = {
+        user_id: request.user_id,
+        request_id: request.id,
+      };
 
-    const data = await axiosFetch.post(
-      "/admin/organizer/requests/accept",
-      inputs
-    );
+      const data = await axiosFetch.post(
+        "/admin/organizer/requests/accept",
+        inputs
+      );
 
-    if (data.status !== 200) {
-      return new Error(data.data.message);
+      const updatedOrganizerRequest = organizerRequests.filter((r) => {
+        return r.id != request.id;
+      });
+
+      const updatedUsers = users.map((u) => {
+        if (request.user_id == u.id) {
+          return {
+            ...u,
+            privilege: "organizer",
+          };
+        }
+        return u;
+      });
+
+      setUsers(updatedUsers);
+      setOrganizerRequests(updatedOrganizerRequest);
+      toast.success("Accepted organizer request");
+      setIsLoading(false);
+    } catch (error) {
+      toast.error(error.name);
+      setIsLoading(false);
     }
-    const updatedOrganizerRequest = organizerRequests.filter((r) => {
-      return r.id != request.id;
-    });
-    setOrganizerRequests(updatedOrganizerRequest);
-    alert("Accepted Organizer Request");
   }
 
   async function handleRejectOrganizerRequest(request) {
-    const inputs = {
-      user_id: request.user_id,
-      request_id: request.id,
-    };
+    setIsLoading(true);
+    try {
+      const inputs = {
+        user_id: request.user_id,
+        request_id: request.id,
+      };
 
-    const data = await axiosFetch.post(
-      "/admin/organizer/requests/reject",
-      inputs
-    );
+      const data = await axiosFetch.post(
+        "/admin/organizer/requests/reject",
+        inputs
+      );
 
-    if (data.status !== 200) {
-      return new Error(data.data.message);
+      const updatedOrganizerRequest = organizerRequests.filter((r) => {
+        return r.id != request.id;
+      });
+
+      setOrganizerRequests(updatedOrganizerRequest);
+
+      toast.success("Rejected Organizer Request");
+      setIsLoading(false);
+    } catch (error) {
+      toast.error(error.message);
+      setIsLoading(false);
     }
-
-    const updatedOrganizerRequest = organizerRequests.filter((r) => {
-      return r.id != request.id;
-    });
-
-    setOrganizerRequests(updatedOrganizerRequest);
-    alert("Rejected Organizer Request");
   }
 
   function setTabUsers() {
@@ -233,39 +296,42 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="justify-center flex flex-row">
-        <button onClick={setTabUsers}>Users</button>
-        <button onClick={setTabOrganizerRequests}>Organizer Requests</button>
-        <button onClick={setTabEventTypes}>Event Types</button>
+    <>
+      {isLoading && <Spinner></Spinner>}
+      <div className="flex flex-col gap-2">
+        <div className="justify-center flex flex-row">
+          <button onClick={setTabUsers}>Users</button>
+          <button onClick={setTabOrganizerRequests}>Organizer Requests</button>
+          <button onClick={setTabEventTypes}>Event Types</button>
+        </div>
+
+        {tab == "Users" && (
+          <Users
+            users={users}
+            handleUpdateUserPrivilege={handleUpdateUserPrivilege}
+          ></Users>
+        )}
+
+        {tab == "Organizer Requests" && (
+          <OrganizerRequests
+            organizerRequests={organizerRequests}
+            handleAcceptOrganizerRequst={handleAcceptOrganizerRequst}
+            handleRejectOrganizerRequest={handleRejectOrganizerRequest}
+          ></OrganizerRequests>
+        )}
+
+        {tab == "Event Types" && (
+          <EventTypes
+            handleNewEventType={handleNewEventType}
+            handleInputEditEvent={handleInputEditEvent}
+            handleSaveNewEventType={handleSaveNewEventType}
+            handleDeleteEventType={handleDeleteEventType}
+            handleEditEvent={handleEditEvent}
+            editModeMap={editModeMap}
+            editValues={editValues}
+          ></EventTypes>
+        )}
       </div>
-
-      {tab == "Users" && (
-        <Users
-          users={users}
-          handleUpdateUserPrivilege={handleUpdateUserPrivilege}
-        ></Users>
-      )}
-
-      {tab == "Organizer Requests" && (
-        <OrganizerRequests
-          organizerRequests={organizerRequests}
-          handleAcceptOrganizerRequst={handleAcceptOrganizerRequst}
-          handleRejectOrganizerRequest={handleRejectOrganizerRequest}
-        ></OrganizerRequests>
-      )}
-
-      {tab == "Event Types" && (
-        <EventTypes
-          handleNewEventType={handleNewEventType}
-          handleInputEditEvent={handleInputEditEvent}
-          handleSaveNewEventType={handleSaveNewEventType}
-          handleDeleteEventType={handleDeleteEventType}
-          handleEditEvent={handleEditEvent}
-          editModeMap={editModeMap}
-          editValues={editValues}
-        ></EventTypes>
-      )}
-    </div>
+    </>
   );
 }
