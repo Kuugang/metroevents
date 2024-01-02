@@ -26,6 +26,7 @@ function App() {
   useEffect(() => {
     function onConnect() {
       setIsConnected(true);
+      console.log(socket.id)
     }
 
     function onDisconnect() {
@@ -33,6 +34,7 @@ function App() {
     }
 
     function onUpdateUserPrivilege(value) {
+        console.log(value)
       try {
         const id = JSON.parse(localStorage.getItem("userDetails")).id;
         if (!id) return;
@@ -44,6 +46,7 @@ function App() {
     }
 
     function onSendNotification(value) {
+        console.log(value)
       try {
         const id = JSON.parse(localStorage.getItem("userDetails")).id;
         if (!id) return;
