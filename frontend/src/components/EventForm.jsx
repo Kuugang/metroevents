@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-export default function EventForm({ onSubmit, eventTypes, currentEvent }) {
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [eventVenue, setEventVenue] = useState("");
-  const [eventDescription, setEventDescription] = useState("");
-  const [eventDateTime, setEventDateTime] = useState("");
+export default function EventForm({ onSubmit, eventTypes, currentEvent, eventTitle, setEventTitle, eventType, setEventType, eventVenue, setEventVenue, eventDescription, setEventDescription, eventDateTime, setEventDateTime, imagePreview, setImagePreview }) {
+  
 
   useEffect(() => {
     if (currentEvent) {
@@ -23,12 +19,24 @@ export default function EventForm({ onSubmit, eventTypes, currentEvent }) {
 
       const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
       setEventDateTime(formattedDateTime);
+      setImagePreview(currentEvent.image);
     }
   }, [currentEvent]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(e);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -79,6 +87,7 @@ export default function EventForm({ onSubmit, eventTypes, currentEvent }) {
               type="file"
               name="imgfile"
               accept="image/*"
+              onChange={handleImageChange}
               {...(currentEvent === undefined ? { required: true } : {})}
             ></input>
             <input

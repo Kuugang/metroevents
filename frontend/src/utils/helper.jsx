@@ -203,7 +203,7 @@ function uploadToGitHub(pasteCode, filename) {
   return new Promise((resolve, reject) => {
     const owner = "Kuugang";
     const repo = "metroevents-images";
-    const filePath = `${filename}.txt`;
+    const filePath = `images/${filename}.txt`;
     const commitMessage = "Upload image";
     const branch = "main";
 
@@ -211,6 +211,8 @@ function uploadToGitHub(pasteCode, filename) {
 
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
+
+    
     const requestData = {
       message: commitMessage,
       content: btoa(fileContent),
@@ -247,13 +249,14 @@ export function uploadImage(file) {
     reader.onloadend = async () => {
       const base64data = reader.result;
       let filename = uuidv4();
-      let link = `https://raw.githubusercontent.com/Kuugang/metroevents/main/images/${filename}.txt`;
+
+      let link = `https://raw.githubusercontent.com/Kuugang/metroevents-images/main/images/${filename}.txt`;
 
       try {
         await uploadToGitHub(base64data, filename);
         resolve(link);
       } catch (error) {
-        console.error("Error uploading to PasteBin:", error);
+        console.error("Error uploading to github:", error);
         resolve(null);
       }
     };

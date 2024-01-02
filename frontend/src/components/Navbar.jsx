@@ -49,7 +49,7 @@ export default function Navbar() {
     logout()
       .then(() => {
         toast.success("Logged out");
-        setIsLoading(false)
+        setIsLoading(false);
         setIsLoggedIn(false);
         setUserData("");
         navigate("/");
@@ -153,16 +153,19 @@ export default function Navbar() {
         <div className="flex flex-row gap-2 text-base items-center">
           {isLoggedIn && (
             <>
-              {(userData.privilege === "organizer" ||
-                userData.privilege == "admin") && (
+              {(jwtDecode(localStorage.getItem("userDetails")).privilege ==
+                "organizer" || jwtDecode(localStorage.getItem("userDetails")).privilege) && (
                 <>
                   <Link to="/createEvent">
                     <button>Create Event</button>
                   </Link>
-                  {userData.privilege === "admin" && (
-                    <Link to="/dashboard/admin">
-                      <button>Admin Dashboard</button>
-                    </Link>
+                  {jwtDecode(localStorage.getItem("userDetails")).privilege ==
+                    "admin" && (
+                    <>
+                      <Link to="/dashboard/admin">
+                        <button>Admin Dashboard</button>
+                      </Link>
+                    </>
                   )}
                 </>
               )}
