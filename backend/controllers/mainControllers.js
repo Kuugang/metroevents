@@ -382,7 +382,12 @@ const getUser = asyncHandler(async (req, res) => {
       ])
     ).rows;
 
-    const notifications = await getUserNotifications(user.id);
+    // const notifications = await getUserNotifications(user.id);
+    let notifications = await getCachedNotifications();
+    notifications = notifications.filter((n) => {
+      return n.user_id == user.id
+    })
+    console.log(notifications)
 
     let reviews = await getCachedReviews();
     reviews = reviews.filter((r) => {
@@ -665,7 +670,7 @@ const userGetNotifications = asyncHandler(async (req, res) => {
   try {
     const user_id = req.tokenData.id;
 
-    let query = "SELECT * FROM `notifications` WHERE user_id = ?";
+    let query = "SELECT * FROM notifications WHERE user_id = $1";
     const notifications = await queryDatabase(query, [user_id]);
     res.status(200).json(notifications);
   } catch (error) {
